@@ -11,6 +11,16 @@ import twitter
 import sys
 import os
 
+# Note: you must run `source secrets.sh` before running 
+# this file to set required environmental variables.
+
+api = twitter.Api(
+    consumer_key=os.environ['TWITTER_CONSUMER_KEY'],
+    consumer_secret=os.environ['TWITTER_CONSUMER_SECRET'],
+    access_token_key=os.environ['TWITTER_ACCESS_TOKEN_KEY'],
+    access_token_secret=os.environ['TWITTER_ACCESS_TOKEN_SECRET'])
+
+
 def open_and_read_file(files):
     """Takes file path as string; returns text as string.
 
@@ -132,6 +142,17 @@ def produce_twitter_text(chains):
     return random_text
 
 
+def tweet(chains):
+    """Handles sending tweets"""
+
+    # Produce random text and make it 140 char or less
+    tweet_text = produce_twitter_text(chains)
+
+    #Tweet the random_text
+    api.PostUpdate(tweet_text)
+    return tweet_text
+
+
 def main():
     # Open the files and turn them into one long string
     input_text = open_and_read_file(sys.argv[1:-1])
@@ -140,23 +161,8 @@ def main():
     try:
         # Get a Markov chain
         chains = make_chains(input_text, sys.argv[-1])
-        # Produce random text and make it 140 char or less
-        random_text = produce_twitter_text(chains)
-
-        #Tweet the random_text
-        # Note: you must run `source secrets.sh` before running 
-        # this file to set required environmental variables.
-
-        api = twitter.Api(
-            consumer_key=os.environ['TWITTER_CONSUMER_KEY'],
-            consumer_secret=os.environ['TWITTER_CONSUMER_SECRET'],
-            access_token_key=os.environ['TWITTER_ACCESS_TOKEN_KEY'],
-            access_token_secret=os.environ['TWITTER_ACCESS_TOKEN_SECRET'])
-
-        api.PostUpdate(random_text)
-
-        #display what was tweeted to the screen
-        print random_text
+        #tweet the result and print what it tweeted
+        print tweet(chains)
 
         #after printing to screen, prompt user if they want to do another
         #and if not q to quit.  loop until they quit
@@ -164,9 +170,7 @@ def main():
             user_response = raw_input("Enter to tweet again [q to quit]")
             if user_response != 'q':
                 # Produce new random text
-                random_text = produce_twitter_text(chains)
-                api.PostUpdate(random_text)
-                print random_text
+                print tweet(chains)
             else:
                 break
 
